@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Neon RPS</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Your existing styles */
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    :root {
+      --neon-green: #39ff14;
+      --neon-blue: #00f7ff;
+      --neon-pink: #ff2d75;
+      --neon-purple: #bc13fe;
+      --bg-dark: #0a0a0a;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', monospace;
+      background-color: var(--bg-dark);
+      color: white;
+      overflow: hidden;
+    }
+
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .neon-button {
+      border: 2px solid var(--neon-green);
+      padding: 12px 24px;
+      font-size: 14px;
+      color: var(--neon-green);
+      background: transparent;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--neon-green), inset 0 0 10px var(--neon-green);
+      transition: all 0.3s ease;
+      margin: 8px;
+      text-transform: uppercase;
+    }
+
+    .neon-button:hover {
+      background-color: var(--neon-green);
+      color: #000;
+      box-shadow: 0 0 25px var(--neon-green), 0 0 50px var(--neon-green);
+    }
+
+    .neon-button.purple {
+      border-color: var(--neon-purple);
+      color: var(--neon-purple);
+      box-shadow: 0 0 10px var(--neon-purple), inset 0 0 10px var(--neon-purple);
+    }
+
+    .neon-button.purple:hover {
+      background-color: var(--neon-purple);
+      color: #000;
+      box-shadow: 0 0 25px var(--neon-purple), 0 0 50px var(--neon-purple);
+    }
+
+    .neon-button.blue {
+      border-color: var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue), inset 0 0 10px var(--neon-blue);
+    }
+
+    .neon-button.blue:hover {
+      background-color: var(--neon-blue);
+      color: #000;
+      box-shadow: 0 0 25px var(--neon-blue), 0 0 50px var(--neon-blue);
+    }
+
+    #unity-container {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      aspect-ratio: 9 / 16;
+      height: 100vh;
+      background: black;
+      display: none;
+    }
+
+    @media (max-height: 500px) {
+      #unity-container {
+        aspect-ratio: auto;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #unity-loading-bar {
+      position: absolute;
+      bottom: 2rem;
+      width: 80%;
+      left: 10%;
+      background-color: #222;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    #unity-progress-bar-full {
+      height: 100%;
+      background: linear-gradient(to right, var(--neon-green), var(--neon-blue));
+      width: 0%;
+    }
+
+    .stats-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      z-index: 11;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--neon-green);
+      text-shadow: 0 0 5px var(--neon-green);
+    }
+
+    .stat-icon {
+      font-size: 16px;
+    }
+
+    #leaderboard-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .leaderboard-content {
+      background-color: var(--bg-dark);
+      border: 2px solid var(--neon-blue);
+      padding: 20px;
+      width: 80%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 20px var(--neon-blue);
+    }
+
+    .leaderboard-title {
+      color: var(--neon-blue);
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+      text-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .leaderboard-entry {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--neon-blue);
+    }
+
+    .close-leaderboard {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    #wallet-address {
+      font-size: 10px;
+      margin-top: 10px;
+      color: var(--neon-purple);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 200px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="start-screen">
+    <div class="stats-container">
+      <div class="stat-item">
+        <i class="fas fa-heart stat-icon" style="color: var(--neon-pink)"></i>
+        <span id="lives-count">5</span> Lives
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-coins stat-icon" style="color: var(--neon-green)"></i>
+        <span id="tokens-count">1,250</span> Tokens
+      </div>
+    </div>
+
+    <h1 class="text-3xl mb-8 text-center" style="text-shadow: 0 0 10px var(--neon-green)">NEON RPS</h1>
+
+    <div class="flex flex-col items-center">
+      <button class="neon-button" onclick="startGame()">START GAME</button>
+      <button class="neon-button blue" onclick="showLeaderboard()">
+        <i class="fas fa-trophy"></i> LEADERBOARD
+      </button>
+      <button class="neon-button purple" onclick="connectWallet()">
+        <i class="fas fa-wallet"></i> CONNECT WALLET
+      </button>
+      <div id="wallet-address"></div>
+    </div>
+  </div>
+
+  <div id="leaderboard-modal">
+    <div class="leaderboard-content">
+      <span class="close-leaderboard" onclick="hideLeaderboard()">&times;</span>
+      <h2 class="leaderboard-title">TOP PLAYERS</h2>
+      <div id="leaderboard-entries"></div>
+    </div>
+  </div>
+
+  <div id="unity-container">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="unity-loading-bar">
+      <div id="unity-progress-bar-full"></div>
+    </div>
+    <div id="unity-warning"></div>
+  </div>
+
+  <script>
+    const canvas = document.querySelector("#unity-canvas");
+    const unityContainer = document.getElementById("unity-container");
+    const livesCount = document.getElementById("lives-count");
+    const tokensCount = document.getElementById("tokens-count");
+    const walletAddress = document.getElementById("wallet-address");
+    const leaderboardModal = document.getElementById("leaderboard-modal");
+    const leaderboardEntries = document.getElementById("leaderboard-entries");
+    const progressBarFull = document.getElementById('unity-progress-bar-full');
+
+    let currentScore = 0;
+
+    function updateScoreBar() {
+      // Update progress bar based on score (100 as max score for simplicity)
+      const scorePercentage = Math.min(100, (currentScore / 1000) * 100); // Adjust this based on your game logic
+      progressBarFull.style.width = scorePercentage + '%';
+    }
+
+    function populateLeaderboard() {
+      leaderboardEntries.innerHTML = '';
+      const sampleLeaderboard = [
+        { rank: 1, name: "NEON_SNAKE", score: 9850, tokens: 12500 },
+        { rank: 2, name: "WALL_CRAWLER", score: 8720, tokens: 11000 },
+        { rank: 3, name: "VIPER_99", score: 7650, tokens: 9500 },
+        { rank: 4, name: "PYTHON_X", score: 6540, tokens: 8200 },
+        { rank: 5, name: "COBRA_KAI", score: 5430, tokens: 7000 },
+        { rank: 6, name: "SNAKE_EYES", score: 4320, tokens: 5500 },
+        { rank: 7, name: "RATTLER", score: 3210, tokens: 4000 },
+        { rank: 8, name: "ANACONDA", score: 2100, tokens: 3000 },
+        { rank: 9, name: "BOA", score: 1500, tokens: 2000 },
+        { rank: 10, name: "ADDER", score: 900, tokens: 1200 }
+      ];
+      sampleLeaderboard.forEach(player => {
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
+        entry.innerHTML = `<span>#${player.rank} ${player.name}</span><span>${player.score} pts (${player.tokens.toLocaleString()} tokens)</span>`;
+        leaderboardEntries.appendChild(entry);
+      });
+    }
+
+    function showLeaderboard() {
+      populateLeaderboard();
+      leaderboardModal.style.display = 'flex';
+    }
+
+    function hideLeaderboard() {
+      leaderboardModal.style.display = 'none';
+    }
+
+    function unityShowBanner(msg, type) {
+      const banner = document.getElementById("unity-warning");
+      banner.innerText = msg;
+      banner.style.backgroundColor = type === "error" ? "red" : "yellow";
+      if (type !== "error") {
+        setTimeout(() => (banner.innerText = ""), 5000);
+      }
+    }
+
+    function connectWallet() {
+      const fakeAddress = "0x7f3a...c792";
+      walletAddress.textContent = `Connected: ${fakeAddress}`;
+      tokensCount.textContent = (2500).toLocaleString();
+      unityShowBanner("Wallet connected successfully!", "success");
+    }
+
+    const buildUrl = "Build";
+    const loaderUrl = `${buildUrl}/RPS_Webgl_Somneium.loader.js`;
+    const config = {
+      dataUrl: `${buildUrl}/RPS_Webgl_Somneium.data`,
+      frameworkUrl: `${buildUrl}/RPS_Webgl_Somneium.framework.js`,
+      codeUrl: `${buildUrl}/RPS_Webgl_Somneium.wasm`,
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "Rock Paper Scissors",
+      productVersion: "1.0",
+      showBanner: unityShowBanner
+    };
+
+    function startGame() {
+      const currentLives = parseInt(livesCount.textContent);
+      if (currentLives <= 0) {
+        unityShowBanner("No lives remaining! Please wait or buy more.", "error");
+        return;
+      }
+
+      livesCount.textContent = currentLives - 1;
+      document.getElementById("start-screen").style.display = "none";
+      unityContainer.style.display = "block";
+      document.getElementById("unity-loading-bar").style.display = "none"; // Hide loading bar after the game starts
+
+      // Simulate score increase during gameplay
+      currentScore = 0;
+      const scoreInterval = setInterval(() => {
+        if (currentScore < 1000) {
+          currentScore += 50; // Increment score
+          updateScoreBar(); // Update progress bar
+        } else {
+          clearInterval(scoreInterval);
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>
